@@ -36,25 +36,25 @@ def nb(k: int, m: int, n: int) -> int:
 
 def precompute_real(v: int, w: int):
     """
-    Precomputing binomial coefficients, factorials and hypercube layer sizes.
+    Precomputing binomial coefficients, factorials, and hypercube layer sizes.
     The hypercube is [0,w-1]^v.
     """
 
-
     global max_distance
     max_distance = (w - 1) * v  # distance between all-0 and all-val-1
+
     global factorials
-    # array of factorials
-    factorials = [0 for i in range(max_distance + v + 1)]  # some margin
+    factorials = [0 for i in range(max_distance + v + 1)]
     factorials[0] = 1
     for i in range(1, max_distance + v):
         factorials[i] = factorials[i - 1] * i
+
     global binoms
-    # double array of binoms
     binoms = [
         [0 for i in range(max_distance + v)]
         for j in range(max_distance + v)
     ]
+
     global layer_sizes
     layer_sizes = [0 for i in range(max_distance + 1)]
     for i in range(max_distance + 1):
@@ -74,7 +74,7 @@ def find_optimal_layer_index(v: int, w: int, sec_level: int) -> int:
     precompute_real(v, w)
     # compute top layer size
     sum_ld = 0
-    max_layer_index = v * (w - 1) - 1
+    max_layer_index = v * (w - 1)
     for D in range(0, max_layer_index):
         sum_ld += layer_sizes[D]
         if log(sum_ld, 2) >= sec_level:
