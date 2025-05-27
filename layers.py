@@ -38,13 +38,13 @@ def nb(k, m, n):
 
 def test_nb():
     # number of vectors with two entries in {0,1} that sum to 0 should be 1
-    # number of vectors with two entries in {0,1} that sum to 1 should be 2
-    # number of vectors with two entries in {0,1} that sum to 2 should be 2
+    # number of vectors with two entries in {0,1} that sum to 1 should be 3
+    # number of vectors with two entries in {0,1} that sum to 2 should be 3
     # number of vectors with two entries in {0,1} that sum to 3 should be 1
     precompute_real(3, 2)
     assert nb(0, 1, 3) == 1
-    assert nb(1, 1, 3) == 2
-    assert nb(2, 1, 3) == 2
+    assert nb(1, 1, 3) == 3
+    assert nb(2, 1, 3) == 3
     assert nb(3, 1, 3) == 1
 
 
