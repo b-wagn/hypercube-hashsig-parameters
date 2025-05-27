@@ -261,7 +261,7 @@ def pick_target_sum(num_chains: int, chain_length: int, security_level_classical
     """
     Picks a target sum that is a good fit.
     """
-    final_layer = final_layer_of_domain(num_chains, chain_length, security_level_classical, security_level_quantum)
+    final_layer = final_layer_of_domain(num_chains, chain_length, security_level_classical, security_level_quantum) - 4
     return num_chains * (chain_length - 1) - final_layer
 
 
@@ -332,8 +332,8 @@ def verifier_hashing(
     """
     hashing = []
 
-    # Encode the message, which involves a permutation of width 24
-    hashing += [PERMUTATION_WIDTH_MESSAGE_HASH]
+    # Encode the message, which involves two permutations of width 24
+    hashing += [PERMUTATION_WIDTH_MESSAGE_HASH, PERMUTATION_WIDTH_MESSAGE_HASH]
 
     # For the chains: determine how many steps are needed in total
     chain_steps_signer = target_sum
