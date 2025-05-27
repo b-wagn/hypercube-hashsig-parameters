@@ -10,7 +10,9 @@ Run the script with
 ```
 python3 hypercube.py <number of chains> <length of chains>
 ```
-to get parameter estimates.
+to get parameter estimates. Some combinations of number of chains and length of chains do not lead to any secure setting of parameters.
+In this case, the script fails with an assertion error.
+
 
 ## License
 Apache License, Version 2.0
