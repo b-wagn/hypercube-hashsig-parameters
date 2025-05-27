@@ -3,7 +3,7 @@ from math import log, floor
 w_value = 0
 
 
-def binom(n, k):
+def binom(n: int, k: int) -> int:
     """
     Compute binom(n, k) (n choose k) using big integers.
     Uses a precomputed table if available.
@@ -16,7 +16,7 @@ def binom(n, k):
         return binoms[n][k]
 
 
-def nb(k, m, n):
+def nb(k: int, m: int, n: int) -> int:
     """
     Compute the number of integer vectors of dimension n,
     with entries in [0, m], that sum to k.
@@ -36,6 +36,76 @@ def nb(k, m, n):
     return sum
 
 
+
+def precompute_real(v: int, w: int):
+    """
+    Precomputing binomial coefficients, factorials and hypercube layer sizes.
+    The hypercube is [0,w-1]^v.
+    """
+
+    global powcc
+    powcc = 1  # compute the size of the hypercube
+    for i in range(v):
+        powcc *= w
+    global max_distance
+    max_distance = (w - 1) * v  # distance between all-0 and all-val-1
+    global factorials
+    # array of factorials
+    factorials = [0 for i in range(max_distance + v + 1)]  # some margin
+    factorials[0] = 1
+    for i in range(1, max_distance + v):
+        factorials[i] = factorials[i - 1] * i
+    global binoms
+    # double array of binoms
+    binoms = [
+        [0 for i in range(max_distance + v)]
+        for j in range(max_distance + v)
+    ]
+    global layer_sizes
+    layer_sizes = [0 for i in range(max_distance + 1)]
+    for i in range(max_distance + 1):
+        layer_sizes[i] = nb(i, w - 1, v)
+    global w_value
+    w_value = w
+
+
+
+def find_optimal_layer_index(v: int, w: int, sec_level: int) -> int:
+    """
+    In the hypercube [0,w-1]^v, find layer index D such
+    that L_{[0:D]} exceeds 2^sec_level in the hypercube [w]^v
+    returns -1 if no such D
+    """
+
+    # compute layer sizes
+    precompute_real(v, w)
+    # compute top layer size
+    sum_ld = 0
+    max_layer_index = v * (w - 1) - 1
+    for D in range(0, max_layer_index):
+        sum_ld += layer_sizes[D]
+        if log(sum_ld, 2) >= sec_level:
+            return D
+    return -1
+
+
+def layer_to_domain_ratio(v: int, w: int, D: int, T: int) -> int:
+    """
+    Assumes that target sum is T and determines the relative size of the layer with that
+    target sum within the subset of the hypercube consisting of layers 0 to D.
+    """
+    target_layer = v * (w - 1) - T
+
+    precompute_real(v, w)
+
+    sum_ld = 0
+    for d in range(0, D + 1):
+        sum_ld += layer_sizes[d]
+
+    return layer_sizes[target_layer] / sum_ld
+
+
+
 def test_nb():
     # number of vectors with two entries in {0,1} that sum to 0 should be 1
     # number of vectors with two entries in {0,1} that sum to 1 should be 3
@@ -52,56 +122,3 @@ def test_precompute():
     precompute_real(10, 11)
     print(nb(50, 10, 10))
     print(layer_sizes[50])
-
-
-## Precomputing binomial coefficients, factorials and hypercube layer sizes. Hypercube consists of
-## @dimension elements each taking values from 0 to val-1
-def precompute_real(dimension, val):
-    global powcc
-    powcc = 1  # compute the size of the hypercube
-    for i in range(dimension):
-        powcc *= val
-    global max_distance
-    max_distance = (val - 1) * dimension  # distance between all-0 and all-val-1
-    global factorials
-    # array of factorials
-    factorials = [0 for i in range(max_distance + dimension + 1)]  # some margin
-    factorials[0] = 1
-    for i in range(1, max_distance + dimension):
-        factorials[i] = factorials[i - 1] * i
-    global binoms
-    # double array of binoms
-    binoms = [
-        [0 for i in range(max_distance + dimension)]
-        for j in range(max_distance + dimension)
-    ]
-    global layer_sizes
-    layer_sizes = [0 for i in range(max_distance + 1)]
-    for i in range(max_distance + 1):
-        layer_sizes[i] = nb(i, val - 1, dimension)
-    global w_value
-    w_value = val
-
-
-# find layer index D such that L_{[0:D]} exceeds 2^sec_level in the hypercube [w]^v
-# returns -1 if no such D
-def find_optimal_layer_index(v, w, sec_level):
-    # compute layer sizes
-    precompute_real(v, w)
-    # compute top layer size
-    sum_ld = 0
-    max_layer_index = v * (w - 1) - 1
-    for D in range(0, max_layer_index):
-        sum_ld += layer_sizes[D]
-        if log(sum_ld, 2) >= sec_level:
-            return D
-    return -1
-
-
-def layer_to_domain_ratio(v, w, D, T):
-    target_layer = v * (w - 1) - T
-    precompute_real(v, w)
-    sum_ld = 0
-    for d in range(0, D + 1):
-        sum_ld += layer_sizes[d]
-    return layer_sizes[target_layer] / sum_ld
