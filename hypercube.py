@@ -369,11 +369,11 @@ def compute_parameters(num_chains: int, chain_length: int):
     rand_len_fe = randomness_length_fe(LOG_FIELD_SIZE, LOG_LIFETIME, LOG_K, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
 
     # determine how large our domain needs to be (subset of the hypercube)
-    domain_layer = final_layer_of_domain(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM) #TODO
+    domain_layer = final_layer_of_domain(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
     assert domain_layer >= 0, "Cannot find a suitable domain with these parameters"
 
     # determine the target sum
-    target_sum = pick_target_sum(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM) # TODO
+    target_sum = pick_target_sum(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
 
     # determine how many field elements we need for our parameter
     par_len_fe = parameter_length_fe(LOG_FIELD_SIZE, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
