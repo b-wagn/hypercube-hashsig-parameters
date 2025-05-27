@@ -1,7 +1,7 @@
 
 SECURITY_LEVEL_CLASSICAL = 128
 SECURITY_LEVEL_QUANTUM = 64
-LOG_LIFETIME = 20
+LOG_LIFETIME = 26
 LOG_K = 12
 LOG_FIELD_SIZE = 31
 
@@ -278,6 +278,7 @@ def expected_number_of_trials(num_chains: int, chain_length: int, target_sum: in
 def correctness_error_for_k_trials(num_chains: int, chain_length: int, target_sum: int, domain_layer: int, log_k: int) -> float:
     K = 2 ** log_k
     return correctness_error_per_trial(num_chains, chain_length, target_sum, domain_layer) ** K
+
 
 ###################################################################################################
 #                                       Signature size                                            #
