@@ -1,8 +1,5 @@
 from math import log, floor
 
-w_value = 0
-
-
 def binom(n: int, k: int) -> int:
     """
     Compute binom(n, k) (n choose k) using big integers.
@@ -43,10 +40,7 @@ def precompute_real(v: int, w: int):
     The hypercube is [0,w-1]^v.
     """
 
-    global powcc
-    powcc = 1  # compute the size of the hypercube
-    for i in range(v):
-        powcc *= w
+
     global max_distance
     max_distance = (w - 1) * v  # distance between all-0 and all-val-1
     global factorials
@@ -65,8 +59,7 @@ def precompute_real(v: int, w: int):
     layer_sizes = [0 for i in range(max_distance + 1)]
     for i in range(max_distance + 1):
         layer_sizes[i] = nb(i, w - 1, v)
-    global w_value
-    w_value = w
+
 
 
 
