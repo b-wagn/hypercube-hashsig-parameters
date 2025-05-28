@@ -5,7 +5,7 @@ range_chain_length = range(20, 2, -2)
 
 curr_sig_size = 500000000
 
-headers = ["Number of Chains", "Chain Length", "Target Sum", "Verifier Hashing", "Signature Size [KiB]"]
+headers = ["Number of Chains", "Chain Length", "Target Sum", "Expected Nr of Tries", "Verifier Hashing", "Signature Size [KiB]"]
 table = []
 
 for num_chains in range_num_chains:
@@ -16,6 +16,7 @@ for num_chains in range_num_chains:
                 num_chains,
                 chain_length,
                 parameters['target_sum'],
+                parameters['expected_num_trials'],
                 parameters['hashing'],
                 parameters['sig_size_kilobytes']
             ]
