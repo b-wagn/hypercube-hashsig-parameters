@@ -110,6 +110,14 @@ def test_nb():
     assert nb(2, 1, 3) == 3
     assert nb(3, 1, 3) == 1
 
+    # number of vectors with five entries in {0,1,2,3} that sum to 6 should be 135
+    # number of vectors with five entries in {0,1,2,3} that sum to 12 should be 35
+    # number of vectors with five entries in {0,1,2,3} that sum to 2 should be 15
+    precompute_real(4, 5)
+    assert nb(6, 3, 5) == 135
+    assert nb(12, 3, 5) == 35
+    assert nb(2, 3, 5) == 15
+
 
 def test_precompute():
     precompute_real(10, 11)
