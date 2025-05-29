@@ -120,8 +120,6 @@ def map_to_vertex(w,v,d,x):
     for i in range(1,v):
         ji=-1
         for j in range (max(0,d_curr-(w-1)*(v-i)),min(w,d_curr+1)):
-            assert(d_curr>=j) #remove in prod
-            assert(len(all_layer_sizes_array[v-i])>d_curr-j)
             if(x_curr >= all_layer_sizes_array[v-i][d_curr-j]):
                 x_curr -= all_layer_sizes_array[v-i][d_curr-j]
             else:
