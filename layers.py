@@ -97,7 +97,68 @@ def layer_to_domain_ratio(v: int, w: int, D: int, T: int) -> int:
 
     return layer_sizes[target_layer] / sum_ld
 
+def initialize_all_layer_sizes(w,v_max):
+    """
+    compute all layer sizes in hypercubes [w]^v with v between 1 and v_max
+    store in global variable all_layer_sizes_array
+    """
+    global all_layer_sizes_array
+    all_layer_sizes_array = [[]]
+    for v in range(1,v_max+1):
+        precompute_real(v,w)
+        all_layer_sizes_array.append(layer_sizes)
 
+def map_to_vertex(w,v,d,x):
+    """
+    maps a number 0<=x < layer_size(v,d) to an element in layer d
+    """
+    initialize_all_layer_sizes(w,v) #this can be called once per all calls to this function with the same (w,v)
+    x_curr = x
+    assert(x < all_layer_sizes_array[v][d])
+    out=[]
+    d_curr = d
+    for i in range(1,v):
+        ji=-1
+        for j in range (max(0,d_curr-(w-1)*(v-i)),min(w,d_curr+1)):
+            if(x_curr >= all_layer_sizes_array[v-i][d_curr-j]):
+                x_curr -= all_layer_sizes_array[v-i][d_curr-j]
+            else:
+                ji=j
+                break
+        assert(ji>-1)
+        assert(ji<w)
+        ai = w-ji
+        out.append(ai)
+        d_curr -= w-ai
+    assert(x_curr+d_curr<w)
+    out.append(w-x_curr-d_curr)
+    return out
+
+def map_to_integer(w,v,d,a):
+    """
+    maps an element in layer d to number 0<=x < layer_size(v,d)
+    """
+    initialize_all_layer_sizes(w,v)
+    assert(len(a)==v)
+    x_curr = 0
+    d_curr = w-a[v-1]
+    for i in range(v-1,0,-1):
+        ji = w-a[i-1]
+        d_curr += ji
+        for j in range(max(0,d_curr-(w-1)*(v-i)),ji):
+            x_curr += all_layer_sizes_array[v-i][d_curr-j]
+    assert(d_curr==d)
+    return x_curr
+
+def test_maps():
+    w=4
+    v=8
+    d=20
+    precompute_real(v,w)
+    for x in range(layer_sizes[d]):
+        a = map_to_vertex(w,v,d,x)
+        y = map_to_integer(w,v,d,a)
+        assert(x==y)
 
 def test_nb():
     # number of vectors with two entries in {0,1} that sum to 0 should be 1
@@ -123,3 +184,5 @@ def test_precompute():
     precompute_real(10, 11)
     print(nb(50, 10, 10))
     print(layer_sizes[50])
+
+test_maps()
