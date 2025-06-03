@@ -11,7 +11,7 @@ table = []
 for num_chains in range_num_chains:
     for chain_length in range_chain_length:
         try:
-            parameters = compute_parameters(num_chains, chain_length)
+            parameters = compute_parameters(26, num_chains, chain_length)
             row = [
                 num_chains,
                 chain_length,

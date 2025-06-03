@@ -1,7 +1,6 @@
 
 SECURITY_LEVEL_CLASSICAL = 128
 SECURITY_LEVEL_QUANTUM = 64
-LOG_LIFETIME = 26
 LOG_K = 12
 LOG_FIELD_SIZE = 31
 
@@ -359,7 +358,7 @@ def verifier_hashing(
 #                  Summary: compute everything given num_chains and chain_length                  #
 ###################################################################################################
 
-def compute_parameters(num_chains: int, chain_length: int):
+def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int):
     """
     outputs parameters like hash output length, randomness length, etc
     and the resulting efficiency (signature size, verifier hashing)
@@ -367,7 +366,7 @@ def compute_parameters(num_chains: int, chain_length: int):
     """
 
     # determine how many field elements we need for randomness
-    rand_len_fe = randomness_length_fe(LOG_FIELD_SIZE, LOG_LIFETIME, LOG_K, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    rand_len_fe = randomness_length_fe(LOG_FIELD_SIZE, log_lifetime, LOG_K, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
 
     # determine how large our domain needs to be (subset of the hypercube)
     domain_layer = final_layer_of_domain(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
@@ -381,13 +380,13 @@ def compute_parameters(num_chains: int, chain_length: int):
 
     # determine how many field elements our
     # tweakable hash in chains and tree needs to output
-    hash_len_fe = hash_length_fe(LOG_FIELD_SIZE, LOG_LIFETIME, num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    hash_len_fe = hash_length_fe(LOG_FIELD_SIZE, log_lifetime, num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
 
     # assert that the input lengths for the tweakable hash can hold
     # all possible inputs (including their tweaks and parameters)
     # and that parameters make sense to encode tweaks
     tweak_len_fe = tweak_length_fe_chain_and_tree(LOG_FIELD_SIZE)
-    assert tweak_parameters_can_fit_into_integer_bounds(LOG_LIFETIME, num_chains, chain_length), "Cannot encode tweaks by appropriate integers"
+    assert tweak_parameters_can_fit_into_integer_bounds(log_lifetime, num_chains, chain_length), "Cannot encode tweaks by appropriate integers"
     assert permutation_width_16_enough_for_chain_hash(par_len_fe, tweak_len_fe, hash_len_fe), "Permutation width 16 not enough for chain hash"
     assert permutation_width_24_enough_for_tree_hash(par_len_fe, tweak_len_fe, hash_len_fe), "Permutation width 24 not enough for tree hash"
     assert permutation_width_24_enough_for_message_hash(LOG_FIELD_SIZE, par_len_fe, rand_len_fe), "Permutation width 24 not enough for message hash"
@@ -395,10 +394,10 @@ def compute_parameters(num_chains: int, chain_length: int):
     # Now that we have all parameters, we determine the efficiency
 
     # determine amount of verification hashing
-    hashing = verifier_hashing(LOG_LIFETIME, num_chains, chain_length, target_sum, tweak_len_fe, par_len_fe, hash_len_fe)
+    hashing = verifier_hashing(log_lifetime, num_chains, chain_length, target_sum, tweak_len_fe, par_len_fe, hash_len_fe)
 
     # determine signature size
-    sig_size_fe = signature_size_fe(LOG_LIFETIME, hash_len_fe, rand_len_fe, num_chains)
+    sig_size_fe = signature_size_fe(log_lifetime, hash_len_fe, rand_len_fe, num_chains)
     sig_size_kilobytes = bytes_per_field_element(LOG_FIELD_SIZE) * sig_size_fe / 1024
 
     # determine correctness error per trial, expected nr of trials, and full correctness error
@@ -434,13 +433,14 @@ import pprint
 
 def main():
     parser = argparse.ArgumentParser(description="Compute signature scheme parameters.")
+    parser.add_argument("log_lifetime", type=int, help="Log_2 of the key lifetime")
     parser.add_argument("num_chains", type=int, help="Number of chains")
     parser.add_argument("chain_length", type=int, help="Length of each chain")
 
     args = parser.parse_args()
 
     # Call the function with the provided arguments
-    result = compute_parameters(args.num_chains, args.chain_length)
+    result = compute_parameters(args.log_lifetime, args.num_chains, args.chain_length)
 
     # Pretty-print the dictionary
     print("\nComputed Parameters:")
