@@ -1,5 +1,6 @@
 from math import log, floor
 
+
 def binom(n: int, k: int) -> int:
     """
     Compute binom(n, k) (n choose k) using big integers.
@@ -33,8 +34,7 @@ def nb(k: int, m: int, n: int) -> int:
     return sum
 
 
-
-def precompute_real(v: int, w: int):
+def precompute_layer_sizes(v: int, w: int):
     """
     Precomputing binomial coefficients, factorials, and hypercube layer sizes.
     The hypercube is [0,w-1]^v.
@@ -50,10 +50,7 @@ def precompute_real(v: int, w: int):
         factorials[i] = factorials[i - 1] * i
 
     global binoms
-    binoms = [
-        [0 for i in range(max_distance + v)]
-        for j in range(max_distance + v)
-    ]
+    binoms = [[0 for i in range(max_distance + v)] for j in range(max_distance + v)]
 
     global layer_sizes
     layer_sizes = [0 for i in range(max_distance + 1)]
@@ -61,6 +58,16 @@ def precompute_real(v: int, w: int):
         layer_sizes[i] = nb(i, w - 1, v)
 
 
+def precompute_all_layer_sizes(w, v_max):
+    """
+    compute all layer sizes in hypercubes [w]^v with v between 1 and v_max
+    store in global variable all_layer_sizes_array
+    """
+    global all_layer_sizes_array
+    all_layer_sizes_array = [[]]
+    for v in range(1, v_max + 1):
+        precompute_layer_sizes(v, w)
+        all_layer_sizes_array.append(layer_sizes)
 
 
 def find_optimal_layer_index(v: int, w: int, sec_level: int) -> int:
@@ -71,7 +78,7 @@ def find_optimal_layer_index(v: int, w: int, sec_level: int) -> int:
     """
 
     # compute layer sizes
-    precompute_real(v, w)
+    precompute_layer_sizes(v, w)
     # compute top layer size
     sum_ld = 0
     max_layer_index = v * (w - 1)
@@ -89,7 +96,7 @@ def layer_to_domain_ratio(v: int, w: int, D: int, T: int) -> int:
     """
     target_layer = v * (w - 1) - T
 
-    precompute_real(v, w)
+    precompute_layer_sizes(v, w)
 
     sum_ld = 0
     for d in range(0, D + 1):
@@ -97,75 +104,80 @@ def layer_to_domain_ratio(v: int, w: int, D: int, T: int) -> int:
 
     return layer_sizes[target_layer] / sum_ld
 
-def initialize_all_layer_sizes(w,v_max):
-    """
-    compute all layer sizes in hypercubes [w]^v with v between 1 and v_max
-    store in global variable all_layer_sizes_array
-    """
-    global all_layer_sizes_array
-    all_layer_sizes_array = [[]]
-    for v in range(1,v_max+1):
-        precompute_real(v,w)
-        all_layer_sizes_array.append(layer_sizes)
 
-def map_to_vertex(w,v,d,x):
+def map_to_vertex(w, v, d, x):
     """
-    maps a number 0<=x < layer_size(v,d) to an element in layer d
+    maps a number 0<= x < layer_size(v,d) to an element in layer d
+    of the hypercube [w]^v
     """
-    initialize_all_layer_sizes(w,v) #this can be called once per all calls to this function with the same (w,v)
+
+    # this can be called once per all calls to this function with the same (w,v)
+    precompute_all_layer_sizes(w, v)
+
     x_curr = x
-    assert(x < all_layer_sizes_array[v][d])
-    out=[]
+    assert x < all_layer_sizes_array[v][d]
+
+    out = []
     d_curr = d
-    for i in range(1,v):
-        ji=-1
-        for j in range (max(0,d_curr-(w-1)*(v-i)),min(w,d_curr+1)):
-            if(x_curr >= all_layer_sizes_array[v-i][d_curr-j]):
-                x_curr -= all_layer_sizes_array[v-i][d_curr-j]
+    for i in range(1, v):
+        ji = -1
+        for j in range(max(0, d_curr - (w - 1) * (v - i)), min(w, d_curr + 1)):
+            if x_curr >= all_layer_sizes_array[v - i][d_curr - j]:
+                x_curr -= all_layer_sizes_array[v - i][d_curr - j]
             else:
-                ji=j
+                ji = j
                 break
-        assert(ji>-1)
-        assert(ji<w)
-        ai = w-ji
+        assert ji > -1
+        assert ji < w
+        ai = w - ji
         out.append(ai)
-        d_curr -= w-ai
-    assert(x_curr+d_curr<w)
-    out.append(w-x_curr-d_curr)
+        d_curr -= w - ai
+    assert x_curr + d_curr < w
+    out.append(w - x_curr - d_curr)
     return out
 
-def map_to_integer(w,v,d,a):
+
+def map_to_integer(w, v, d, a):
     """
-    maps an element in layer d to number 0<=x < layer_size(v,d)
+    maps an element in layer d of the hypercube [w]^v
+    to number 0 <= x < layer_size(v,d)
     """
-    initialize_all_layer_sizes(w,v)
-    assert(len(a)==v)
+    precompute_all_layer_sizes(w, v)
+    assert len(a) == v
     x_curr = 0
-    d_curr = w-a[v-1]
-    for i in range(v-1,0,-1):
-        ji = w-a[i-1]
+    d_curr = w - a[v - 1]
+    for i in range(v - 1, 0, -1):
+        ji = w - a[i - 1]
         d_curr += ji
-        for j in range(max(0,d_curr-(w-1)*(v-i)),ji):
-            x_curr += all_layer_sizes_array[v-i][d_curr-j]
-    assert(d_curr==d)
+        for j in range(max(0, d_curr - (w - 1) * (v - i)), ji):
+            x_curr += all_layer_sizes_array[v - i][d_curr - j]
+    assert d_curr == d
     return x_curr
 
+
 def test_maps():
-    w=4
-    v=8
-    d=20
-    precompute_real(v,w)
+
+    # test that mapping to vertex and then back to integer
+    # results in the original input, and vice versa
+
+    w = 4
+    v = 8
+    d = 20
+    precompute_layer_sizes(v, w)
+
     for x in range(layer_sizes[d]):
-        a = map_to_vertex(w,v,d,x)
-        y = map_to_integer(w,v,d,a)
-        assert(x==y)
+        a = map_to_vertex(w, v, d, x)
+        y = map_to_integer(w, v, d, a)
+        b = map_to_vertex(w, v, d, y)
+        assert x == y and a == b
+
 
 def test_nb():
     # number of vectors with two entries in {0,1} that sum to 0 should be 1
     # number of vectors with two entries in {0,1} that sum to 1 should be 3
     # number of vectors with two entries in {0,1} that sum to 2 should be 3
     # number of vectors with two entries in {0,1} that sum to 3 should be 1
-    precompute_real(3, 2)
+    precompute_layer_sizes(3, 2)
     assert nb(0, 1, 3) == 1
     assert nb(1, 1, 3) == 3
     assert nb(2, 1, 3) == 3
@@ -174,15 +186,11 @@ def test_nb():
     # number of vectors with five entries in {0,1,2,3} that sum to 6 should be 135
     # number of vectors with five entries in {0,1,2,3} that sum to 12 should be 35
     # number of vectors with five entries in {0,1,2,3} that sum to 2 should be 15
-    precompute_real(4, 5)
+    precompute_layer_sizes(4, 5)
     assert nb(6, 3, 5) == 135
     assert nb(12, 3, 5) == 35
     assert nb(2, 3, 5) == 15
 
 
-def test_precompute():
-    precompute_real(10, 11)
-    print(nb(50, 10, 10))
-    print(layer_sizes[50])
-
 test_maps()
+test_nb()
