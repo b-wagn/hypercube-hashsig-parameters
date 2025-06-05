@@ -430,21 +430,84 @@ def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int):
 import argparse
 import pprint
 
+def generate_rust_code(params, log_lifetime, num_chains, chain_length):
+    rust_template = f"""\
+const LOG_LIFETIME: usize = {log_lifetime};
+
+const DIMENSION: usize = {num_chains};
+const BASE: usize = {chain_length};
+const FINAL_LAYER: usize = {params['domain_layer']};
+const TARGET_SUM: usize = {params['target_sum']};
+
+const PARAMETER_LEN: usize = {params['par_len_fe']};
+const TWEAK_LEN_FE: usize = {params['tweak_len_fe']};
+const MSG_LEN_FE: usize = 9;
+const RAND_LEN_FE: usize = {params['rand_len_fe']};
+const HASH_LEN_FE: usize = {params['hash_len_fe']};
+
+const CAPACITY: usize = 9;
+
+const POSEIDON_INVOCATIONS: usize = 2;
+const POS_OUTPUT_LEN_FE: usize = POSEIDON_INVOCATIONS * 24;
+
+type MH = TopLevelPoseidonMessageHash<
+    POS_OUTPUT_LEN_FE,
+    DIMENSION,
+    BASE,
+    FINAL_LAYER,
+    TWEAK_LEN_FE,
+    MSG_LEN_FE,
+    PARAMETER_LEN,
+    RAND_LEN_FE,
+>;
+type TH = PoseidonTweakHash<PARAMETER_LEN, HASH_LEN_FE, TWEAK_LEN_FE, CAPACITY, DIMENSION>;
+type PRF = ShakePRFtoF<HASH_LEN_FE>;
+type IE = TargetSumEncoding<MH, TARGET_SUM>;
+
+pub type SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length} =
+    GeneralizedXMSSSignatureScheme<PRF, IE, TH, LOG_LIFETIME>;
+
+#[cfg(test)]
+mod test {{
+
+    #[cfg(feature = "slow-tests")]
+    use crate::signature::test_templates::_test_signature_scheme_correctness;
+
+    #[test]
+    pub fn test_internal_consistency() {{
+        SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}::internal_consistency_check();
+    }}
+
+    #[test]
+    #[cfg(feature = "slow-tests")]
+    pub fn test_correctness() {{
+        _test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(213);
+        _test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(4);
+    }}
+}}"""
+    return rust_template
+
 
 def main():
     parser = argparse.ArgumentParser(description="Compute signature scheme parameters.")
     parser.add_argument("log_lifetime", type=int, help="Log_2 of the key lifetime")
     parser.add_argument("num_chains", type=int, help="Number of chains")
     parser.add_argument("chain_length", type=int, help="Length of each chain")
+    parser.add_argument("--rustcode", action="store_true", help="Output Rust code with computed parameters")
 
     args = parser.parse_args()
 
     # Call the function with the provided arguments
     result = compute_parameters(args.log_lifetime, args.num_chains, args.chain_length)
 
-    # Pretty-print the dictionary
-    print("\nComputed Parameters:")
-    pprint.pprint(result, sort_dicts=False)
+    if args.rustcode:
+        rust_code = generate_rust_code(result, args.log_lifetime, args.num_chains, args.chain_length)
+        print("\nGenerated Rust Code:\n")
+        print(rust_code)
+    else:
+        print("\nComputed Parameters:")
+        pprint.pprint(result, sort_dicts=False)
+
 
 if __name__ == "__main__":
     main()
