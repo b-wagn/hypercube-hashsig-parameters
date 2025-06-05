@@ -64,12 +64,12 @@ def tweak_parameters_can_fit_into_integer_bounds(log_lifetime: int, num_chains: 
     if log_lifetime > 32:
         return False
 
-    # chain index should be u16
-    if num_chains > 2**16:
+    # chain index should be u8
+    if num_chains > 2**8:
         return False
 
-    # position in chain should be u16
-    if chain_length > 2**16:
+    # position in chain should be u8
+    if chain_length > 2**8:
         return False
 
     return True
@@ -85,7 +85,7 @@ def tweak_length_fe_chain_and_tree(log_field_size: int) -> int:
     #       u32 for epoch,
     #       u16 for chain index,
     #       u16 for position in chain
-    num_bits = 8 + 32 + 16 + 16
+    num_bits = 8 + 32 + 8 + 8
     return field_elements_to_encode(log_field_size, num_bits)
 
 
