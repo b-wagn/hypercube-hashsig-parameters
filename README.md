@@ -1,5 +1,5 @@
 # Parameter estimations for XMSS-like signatures using novel encodings
-This repository contains preliminary script to set parameters for hash-based signatures that instantiate XMSS as in [this paper](https://eprint.iacr.org/2025/055.pdf), but using novel encodings which are partially inspired by [this paper](https://eprint.iacr.org/2025/889.pdf).
+This repository contains *preliminary* scripts to set parameters for hash-based signatures that instantiate XMSS as in [this paper](https://eprint.iacr.org/2025/055.pdf), but using novel encodings which are inspired by [this paper](https://eprint.iacr.org/2025/889.pdf).
 
 The idea is to replace the incomparable encodings used [here](https://eprint.iacr.org/2025/055.pdf) with incomparable encodings mapping into the top layers of a larger hypercube, as suggested [here](https://eprint.iacr.org/2025/889.pdf).
 
