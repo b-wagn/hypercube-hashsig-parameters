@@ -6,9 +6,9 @@ The idea is to replace the incomparable encodings used [here](https://eprint.iac
 Disclaimer: This not meant to be used in production, parameters have not been audited and are just estimates.
 
 ## Generating a Table
-You can generate a table with some interesting combinations of parameters for key lifetime `2^26` via
+You can generate a table with some interesting combinations of parameters for a given key lifetime via
 ```
-python3 table.py
+python3 table.py <log2 of key lifetime>
 ```
 Note that it may take a few seconds to generate the table.
 
