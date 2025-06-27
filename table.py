@@ -10,9 +10,16 @@ parser.add_argument(
     default=32,
     help="Base-2 logarithm of lifetime (default: 32)"
 )
+parser.add_argument(
+    "--max_expected_tries",
+    type=int,
+    default=30,
+    help="Maximum expected number of tries for signer (default: 30)"
+)
 args = parser.parse_args()
 
 log_lifetime = args.log_lifetime
+max_expected_tries = args.max_expected_tries
 
 range_num_chains = range(80, 30, -4)
 range_chain_length = range(20, 2, -2)
@@ -25,7 +32,7 @@ table = []
 for num_chains in range_num_chains:
     for chain_length in range_chain_length:
         try:
-            parameters = compute_parameters(log_lifetime, num_chains, chain_length)
+            parameters = compute_parameters(log_lifetime, num_chains, chain_length, max_expected_tries)
             row = [
                 num_chains,
                 chain_length,

@@ -256,13 +256,22 @@ def final_layer_of_domain(num_chains: int, chain_length: int, security_level_cla
     level = max(level_classical, level_quantum)
     return layers.find_optimal_layer_index(num_chains, chain_length, level)
 
-def pick_target_sum(num_chains: int, chain_length: int, security_level_classical: int, security_level_quantum: int) -> int:
+def pick_target_sum(num_chains: int, chain_length: int, security_level_classical: int, security_level_quantum: int, max_expected_trials: int) -> int:
     """
     Picks a target sum that is a good fit.
     """
-    final_layer = final_layer_of_domain(num_chains, chain_length, security_level_classical, security_level_quantum) - 4
-    return num_chains * (chain_length - 1) - final_layer
+    domain_layer = final_layer_of_domain(num_chains, chain_length, security_level_classical, security_level_quantum)
+    target_sum = num_chains * (chain_length - 1) - domain_layer
 
+    # increase the target sum (= decrease layer) until we exceed
+    # the bound on expected number of trials (or we run out of layers)
+    while target_sum < num_chains * (chain_length - 1):
+        expected_for_lower_sum = expected_number_of_trials(num_chains, chain_length, target_sum + 1, domain_layer)
+        if expected_for_lower_sum > max_expected_trials:
+            break
+        target_sum = target_sum + 1
+
+    return target_sum
 
 ###################################################################################################
 #                                    Estimated Correctness Error                                  #
@@ -358,7 +367,7 @@ def verifier_hashing(
 #                  Summary: compute everything given num_chains and chain_length                  #
 ###################################################################################################
 
-def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int):
+def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int, max_expected_trials: int):
     """
     outputs parameters like hash output length, randomness length, etc
     and the resulting efficiency (signature size, verifier hashing)
@@ -373,7 +382,7 @@ def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int):
     assert domain_layer >= 0, "Cannot find a suitable domain with these parameters"
 
     # determine the target sum
-    target_sum = pick_target_sum(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    target_sum = pick_target_sum(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM, max_expected_trials)
 
     # determine how many field elements we need for our parameter
     par_len_fe = parameter_length_fe(LOG_FIELD_SIZE, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
@@ -493,12 +502,13 @@ def main():
     parser.add_argument("log_lifetime", type=int, help="Log_2 of the key lifetime")
     parser.add_argument("num_chains", type=int, help="Number of chains")
     parser.add_argument("chain_length", type=int, help="Length of each chain")
+    parser.add_argument("max_expected_trials", type=int, help="Maximum expected number of trials (impacts signer time and target sum)")
     parser.add_argument("--rustcode", action="store_true", help="Output Rust code with computed parameters")
 
     args = parser.parse_args()
 
     # Call the function with the provided arguments
-    result = compute_parameters(args.log_lifetime, args.num_chains, args.chain_length)
+    result = compute_parameters(args.log_lifetime, args.num_chains, args.chain_length, args.max_expected_trials)
 
     if args.rustcode:
         rust_code = generate_rust_code(result, args.log_lifetime, args.num_chains, args.chain_length)

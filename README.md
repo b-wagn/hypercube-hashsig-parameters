@@ -8,16 +8,20 @@ Disclaimer: This not meant to be used in production, parameters have not been au
 ## Generating a Table
 You can generate a table with some interesting combinations of parameters for a given key lifetime via
 ```
-python3 table.py <log2 of key lifetime>
+python3 table.py --log_lifetime <log2 of key lifetime> --max_expected_tries <maximum expected number of tries>
 ```
 Note that it may take a few seconds to generate the table.
+Here, *maximum expected number of tries* refers to the expected number of resampling attempts that we allow in the signer.
+If we increase it, we can potentially increase the target sum and reduce verifier hashing, at the cost of less efficient signing.
 
 ## Parameters for Specific Combinations
 Run the script with
 ```
-python3 hypercube.py <log2 of key lifetime> <number of chains> <length of chains>
+python3 hypercube.py <log2 of key lifetime> <number of chains> <length of chains> <maximum expected number of tries>
 ```
-to get parameter estimates. Some combinations of number of chains and length of chains do not lead to any secure setting of parameters.
+to get parameter estimates.
+
+Some combinations of number of chains and length of chains do not lead to any secure setting of parameters.
 In this case, the script fails with an assertion error.
 
 Interesting combinations are 50 chains of length 8, or 78 chains of length 4.
