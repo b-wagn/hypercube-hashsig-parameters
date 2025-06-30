@@ -368,7 +368,7 @@ def signature_size_fe(
 ###################################################################################################
 
 def verifier_hashing(
-    log_lifetime: int, num_chains: int, chain_length: int, target_sum: int, tweak_len_fe: int, parameter_len_fe: int, hash_len_fe: int
+    log_lifetime: int, num_chains: int, chain_length: int, target_sum: int, tweak_len_fe: int, parameter_len_fe: int, hash_len_fe: int, mh_pos_invocations: int
 ) -> List[Tuple[int, int]]:
     """
     Returns the hash complexity of verification.
@@ -379,8 +379,8 @@ def verifier_hashing(
     """
     hashing = []
 
-    # Encode the message, which involves two permutations of width 24
-    hashing += [PERMUTATION_WIDTH_MESSAGE_HASH, PERMUTATION_WIDTH_MESSAGE_HASH]
+    # Encode the message, which involves a few permutations of width 24
+    hashing += [PERMUTATION_WIDTH_MESSAGE_HASH] * mh_pos_invocations
 
     # For the chains: determine how many steps are needed in total
     chain_steps_signer = target_sum
@@ -457,7 +457,7 @@ def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int, ma
 
     # determine amount of verification hashing
     hashing = verifier_hashing(log_lifetime, num_chains, chain_length,
-                               target_sum, tweak_len_fe, par_len_fe, hash_len_fe)
+                               target_sum, tweak_len_fe, par_len_fe, hash_len_fe, mh_pos_invocations)
 
     # determine signature size
     sig_size_fe = signature_size_fe(

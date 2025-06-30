@@ -1,4 +1,4 @@
-from math import log, floor
+from math import log, ceil, floor
 
 
 def binom(n: int, k: int) -> int:
@@ -98,7 +98,7 @@ def log_summed_layer_size(v: int, w: int, D: int) -> int:
     sum_ld = 0
     for d in range(0, D + 1):
         sum_ld += layer_sizes[d]
-    return sum_ld
+    return ceil(log(sum_ld, 2))
 
 
 def layer_to_domain_ratio(v: int, w: int, D: int, T: int) -> int:
