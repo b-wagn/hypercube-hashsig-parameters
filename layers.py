@@ -89,6 +89,18 @@ def find_optimal_layer_index(v: int, w: int, sec_level: int) -> int:
     return -1
 
 
+def log_summed_layer_size(v: int, w: int, D: int) -> int:
+    """
+    Outputs the ceiled log (base 2) of the sum of layer sizes from 0 to D.
+    """
+    precompute_layer_sizes(v, w)
+
+    sum_ld = 0
+    for d in range(0, D + 1):
+        sum_ld += layer_sizes[d]
+    return sum_ld
+
+
 def layer_to_domain_ratio(v: int, w: int, D: int, T: int) -> int:
     """
     Assumes that target sum is T and determines the relative size of the layer with that

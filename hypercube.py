@@ -1,13 +1,15 @@
 
+import pprint
+import argparse
+import layers
+from typing import List, Tuple
+import math
+from collections import Counter
 SECURITY_LEVEL_CLASSICAL = 128
 SECURITY_LEVEL_QUANTUM = 64
 LOG_K = 12
 LOG_FIELD_SIZE = 31
 
-from collections import Counter
-import math
-from typing import List, Tuple
-import layers
 
 ###################################################################################################
 #                                      Helper Functions                                           #
@@ -41,7 +43,6 @@ def field_elements_to_encode(log_field_size: int, input_len: int) -> int:
         res += 1
 
     return res
-
 
 
 ###################################################################################################
@@ -89,16 +90,13 @@ def tweak_length_fe_chain_and_tree(log_field_size: int) -> int:
     return field_elements_to_encode(log_field_size, num_bits)
 
 
-
-
 ###################################################################################################
 #                Functions and constants related to Poseidon permutation widths                   #
 ###################################################################################################
-
-
 PERMUTATION_WIDTH_MESSAGE_HASH = 24
 PERMUTATION_WIDTH_TREE_HASH = 24
 PERMUTATION_WIDTH_CHAIN_HASH = 16
+
 
 def round_to_valid_width(width: int) -> int:
     """
@@ -131,7 +129,8 @@ def permutation_width_16_enough_for_chain_hash(
     """
     Checks if permutation width 16 is enough to be used for chain hashing.
     """
-    min_width = round_to_valid_width(parameter_len_fe + tweak_len_fe + hash_len_fe)
+    min_width = round_to_valid_width(
+        parameter_len_fe + tweak_len_fe + hash_len_fe)
     return min_width <= PERMUTATION_WIDTH_CHAIN_HASH and hash_len_fe <= PERMUTATION_WIDTH_CHAIN_HASH
 
 
@@ -141,9 +140,9 @@ def permutation_width_24_enough_for_tree_hash(
     """
     Checks if permutation width 24 is enough to be used for tree hashing.
     """
-    min_width = round_to_valid_width(parameter_len_fe + tweak_len_fe + 2 * hash_len_fe)
+    min_width = round_to_valid_width(
+        parameter_len_fe + tweak_len_fe + 2 * hash_len_fe)
     return min_width <= PERMUTATION_WIDTH_TREE_HASH and hash_len_fe <= PERMUTATION_WIDTH_TREE_HASH
-
 
 
 def permutation_widths_leaf_hash(
@@ -157,9 +156,12 @@ def permutation_widths_leaf_hash(
     """
 
     # first determine capacity
-    capacity_lower_bound_classical = math.ceil( 2* security_level_classical / log_field_size)
-    capacity_lower_bound_quantum = math.ceil(3 * security_level_quantum / log_field_size)
-    capacity = max(capacity_lower_bound_classical, capacity_lower_bound_quantum)
+    capacity_lower_bound_classical = math.ceil(
+        2 * security_level_classical / log_field_size)
+    capacity_lower_bound_quantum = math.ceil(
+        3 * security_level_quantum / log_field_size)
+    capacity = max(capacity_lower_bound_classical,
+                   capacity_lower_bound_quantum)
 
     # initially, we use a call to PoseidonCompress with internal
     # permutation width of 24.
@@ -176,7 +178,6 @@ def permutation_widths_leaf_hash(
     return widths
 
 
-
 ###################################################################################################
 #                            Functions to compute individual parameters                           #
 ###################################################################################################
@@ -189,10 +190,11 @@ def randomness_length_fe(log_field_size: int, log_lifetime: int, log_K: int, sec
 
     # lower bounds on log|R| imposed by security bounds
     rand_len_bits_classical = math.ceil(
-        security_level_classical + math.log2(5) + log_lifetime + log_K + 1
+        security_level_classical +
+        math.log2(5) + log_lifetime + log_K + math.log2(3)
     )
     rand_len_bits_quantum = math.ceil(
-        2 * (security_level_quantum + math.log2(5) + math.log2(3) + log_K)
+        2 * (security_level_quantum + math.log2(5) + 2 * math.log2(3) + log_K - 1)
         + log_lifetime
     )
     lower_bound_bits = max(rand_len_bits_classical, rand_len_bits_quantum)
@@ -208,8 +210,10 @@ def parameter_length_fe(log_field_size: int, security_level_classical: int, secu
     """
 
     # lower bounds on log|P| imposed by security bounds
-    par_len_bits_classical = math.ceil(security_level_classical + math.log2(5) + 3)
-    par_len_bits_quantum = math.ceil(2 * (security_level_quantum + math.log2(5) + 2) + 5)
+    par_len_bits_classical = math.ceil(
+        security_level_classical + math.log2(5) + 3)
+    par_len_bits_quantum = math.ceil(
+        2 * security_level_quantum + math.log2(5) + 7)
     lower_bound_bits = max(par_len_bits_classical, par_len_bits_quantum)
 
     # round up to field elements
@@ -251,22 +255,56 @@ def final_layer_of_domain(num_chains: int, chain_length: int, security_level_cla
     Determines the part of the hypercube into which we map. That is D in ell_{[0:D]}.
     This is picked such that ell_{[0:D]} (size of this part of the hypercube) is large enough.
     """
-    level_classical = security_level_classical + math.log2(5) + 1
-    level_quantum = 2 * (security_level_quantum + math.log2(5) + 1) + 3
+    level_classical = math.ceil(
+        security_level_classical + math.log2(5) + math.log2(3))
+    level_quantum = math.ceil(
+        2 * security_level_quantum + math.log2(5) + math.log2(3) + 3)
     level = max(level_classical, level_quantum)
     return layers.find_optimal_layer_index(num_chains, chain_length, level)
+
+
+def message_hash_before_mod_len_fe(log_field_size: int, num_chains: int, chain_length: int, domain_layer: int, security_level_classical: int, security_level_quantum: int):
+    """
+    Determines the minimum number of field elements the message hash needs to output
+    before we can apply modulo and map to vertex.
+    """
+
+    log_domain_size = layers.log_summed_layer_size(
+        num_chains, chain_length, domain_layer)
+
+    len_bits_classical = math.ceil(
+        security_level_classical
+        + log_domain_size
+        + math.log2(5)
+        + math.log2(3)
+        + 1
+    )
+    len_bits_quantum = math.ceil(
+        4 * security_level_quantum
+        + log_domain_size
+        + 2 * math.log2(5)
+        + 2 * math.log2(3)
+        + 6
+    )
+    lower_bound_bits = max(len_bits_classical, len_bits_quantum)
+
+    # round up to field elements
+    return math.ceil(lower_bound_bits / log_field_size)
+
 
 def pick_target_sum(num_chains: int, chain_length: int, security_level_classical: int, security_level_quantum: int, max_expected_trials: int) -> int:
     """
     Picks a target sum that is a good fit.
     """
-    domain_layer = final_layer_of_domain(num_chains, chain_length, security_level_classical, security_level_quantum)
+    domain_layer = final_layer_of_domain(
+        num_chains, chain_length, security_level_classical, security_level_quantum)
     target_sum = num_chains * (chain_length - 1) - domain_layer
 
     # increase the target sum (= decrease layer) until we exceed
     # the bound on expected number of trials (or we run out of layers)
     while target_sum < num_chains * (chain_length - 1):
-        expected_for_lower_sum = expected_number_of_trials(num_chains, chain_length, target_sum + 1, domain_layer)
+        expected_for_lower_sum = expected_number_of_trials(
+            num_chains, chain_length, target_sum + 1, domain_layer)
         if expected_for_lower_sum > max_expected_trials:
             break
         target_sum = target_sum + 1
@@ -277,11 +315,14 @@ def pick_target_sum(num_chains: int, chain_length: int, security_level_classical
 #                                    Estimated Correctness Error                                  #
 ###################################################################################################
 
+
 def correctness_error_per_trial(num_chains: int, chain_length: int, target_sum: int, domain_layer: int) -> float:
     return 1.0 - layers.layer_to_domain_ratio(num_chains, chain_length, domain_layer, target_sum)
 
+
 def expected_number_of_trials(num_chains: int, chain_length: int, target_sum: int, domain_layer: int) -> float:
     return 1.0 / (1.0 - correctness_error_per_trial(num_chains, chain_length, target_sum, domain_layer))
+
 
 def correctness_error_for_k_trials(num_chains: int, chain_length: int, target_sum: int, domain_layer: int, log_k: int) -> float:
     K = 2 ** log_k
@@ -322,8 +363,6 @@ def signature_size_fe(
     return signature_size
 
 
-
-
 ###################################################################################################
 #                                       Verifier hashing                                          #
 ###################################################################################################
@@ -352,7 +391,8 @@ def verifier_hashing(
     hashing += chain_steps_verifier * [PERMUTATION_WIDTH_CHAIN_HASH]
 
     # Now, we hash the chain ends to get the leaf
-    hashing += permutation_widths_leaf_hash(LOG_FIELD_SIZE, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM, parameter_len_fe, tweak_len_fe, hash_len_fe, num_chains)
+    hashing += permutation_widths_leaf_hash(LOG_FIELD_SIZE, SECURITY_LEVEL_CLASSICAL,
+                                            SECURITY_LEVEL_QUANTUM, parameter_len_fe, tweak_len_fe, hash_len_fe, num_chains)
 
     # We verify the Merkle path
     hashing += log_lifetime * [PERMUTATION_WIDTH_TREE_HASH]
@@ -360,7 +400,6 @@ def verifier_hashing(
     # Now, hashing contains all invocations separately, but we want to
     # group them (compute a histogram in some sense)
     return list(Counter(hashing).items())
-
 
 
 ###################################################################################################
@@ -375,49 +414,70 @@ def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int, ma
     """
 
     # determine how many field elements we need for randomness
-    rand_len_fe = randomness_length_fe(LOG_FIELD_SIZE, log_lifetime, LOG_K, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    rand_len_fe = randomness_length_fe(
+        LOG_FIELD_SIZE, log_lifetime, LOG_K, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
 
     # determine how large our domain needs to be (subset of the hypercube)
-    domain_layer = final_layer_of_domain(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    domain_layer = final_layer_of_domain(
+        num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
     assert domain_layer >= 0, "Cannot find a suitable domain with these parameters"
 
+    # determine the number of invocations of Poseidon (width 24) we need during message hashing
+    # we assume we take 8 elements from each invocation
+    mh_pos_invocations = math.ceil(message_hash_before_mod_len_fe(
+        LOG_FIELD_SIZE, num_chains, chain_length, domain_layer, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM) / 8)
+
     # determine the target sum
-    target_sum = pick_target_sum(num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM, max_expected_trials)
+    target_sum = pick_target_sum(
+        num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM, max_expected_trials)
 
     # determine how many field elements we need for our parameter
-    par_len_fe = parameter_length_fe(LOG_FIELD_SIZE, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    par_len_fe = parameter_length_fe(
+        LOG_FIELD_SIZE, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
 
     # determine how many field elements our
     # tweakable hash in chains and tree needs to output
-    hash_len_fe = hash_length_fe(LOG_FIELD_SIZE, log_lifetime, num_chains, chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    hash_len_fe = hash_length_fe(LOG_FIELD_SIZE, log_lifetime, num_chains,
+                                 chain_length, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
 
     # assert that the input lengths for the tweakable hash can hold
     # all possible inputs (including their tweaks and parameters)
     # and that parameters make sense to encode tweaks
     tweak_len_fe = tweak_length_fe_chain_and_tree(LOG_FIELD_SIZE)
-    assert tweak_parameters_can_fit_into_integer_bounds(log_lifetime, num_chains, chain_length), "Cannot encode tweaks by appropriate integers"
-    assert permutation_width_16_enough_for_chain_hash(par_len_fe, tweak_len_fe, hash_len_fe), "Permutation width 16 not enough for chain hash"
-    assert permutation_width_24_enough_for_tree_hash(par_len_fe, tweak_len_fe, hash_len_fe), "Permutation width 24 not enough for tree hash"
-    assert permutation_width_24_enough_for_message_hash(LOG_FIELD_SIZE, par_len_fe, rand_len_fe), "Permutation width 24 not enough for message hash"
+    assert tweak_parameters_can_fit_into_integer_bounds(
+        log_lifetime, num_chains, chain_length), "Cannot encode tweaks by appropriate integers"
+    assert permutation_width_16_enough_for_chain_hash(
+        par_len_fe, tweak_len_fe, hash_len_fe), "Permutation width 16 not enough for chain hash"
+    assert permutation_width_24_enough_for_tree_hash(
+        par_len_fe, tweak_len_fe, hash_len_fe), "Permutation width 24 not enough for tree hash"
+    assert permutation_width_24_enough_for_message_hash(
+        LOG_FIELD_SIZE, par_len_fe, rand_len_fe), "Permutation width 24 not enough for message hash"
 
     # Now that we have all parameters, we determine the efficiency
 
     # determine amount of verification hashing
-    hashing = verifier_hashing(log_lifetime, num_chains, chain_length, target_sum, tweak_len_fe, par_len_fe, hash_len_fe)
+    hashing = verifier_hashing(log_lifetime, num_chains, chain_length,
+                               target_sum, tweak_len_fe, par_len_fe, hash_len_fe)
 
     # determine signature size
-    sig_size_fe = signature_size_fe(log_lifetime, hash_len_fe, rand_len_fe, num_chains)
-    sig_size_kilobytes = bytes_per_field_element(LOG_FIELD_SIZE) * sig_size_fe / 1024
+    sig_size_fe = signature_size_fe(
+        log_lifetime, hash_len_fe, rand_len_fe, num_chains)
+    sig_size_kilobytes = bytes_per_field_element(
+        LOG_FIELD_SIZE) * sig_size_fe / 1024
 
     # determine correctness error per trial, expected nr of trials, and full correctness error
-    corr_error_per_trial = correctness_error_per_trial(num_chains, chain_length, target_sum, domain_layer)
-    expected_num_trials = expected_number_of_trials(num_chains, chain_length, target_sum, domain_layer)
-    corr_error = correctness_error_for_k_trials(num_chains, chain_length, target_sum, domain_layer, LOG_K)
+    corr_error_per_trial = correctness_error_per_trial(
+        num_chains, chain_length, target_sum, domain_layer)
+    expected_num_trials = expected_number_of_trials(
+        num_chains, chain_length, target_sum, domain_layer)
+    corr_error = correctness_error_for_k_trials(
+        num_chains, chain_length, target_sum, domain_layer, LOG_K)
 
     # return the result as a dict
     return {
         'rand_len_fe': rand_len_fe,
         'domain_layer': domain_layer,
+        'mh_pos_invocations': mh_pos_invocations,
         'target_sum': target_sum,
         'par_len_fe': par_len_fe,
         'hash_len_fe': hash_len_fe,
@@ -436,9 +496,6 @@ def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int, ma
 ###################################################################################################
 
 
-import argparse
-import pprint
-
 def generate_rust_code(params, log_lifetime, num_chains, chain_length):
     rust_template = f"""\
 const LOG_LIFETIME: usize = {log_lifetime};
@@ -456,8 +513,8 @@ const HASH_LEN_FE: usize = {params['hash_len_fe']};
 
 const CAPACITY: usize = 9;
 
-const POSEIDON_INVOCATIONS: usize = 2;
-const POS_OUTPUT_LEN_FE: usize = POSEIDON_INVOCATIONS * 24;
+const POSEIDON_INVOCATIONS: usize = {params['mh_pos_invocations']};
+const POS_OUTPUT_LEN_FE: usize = POSEIDON_INVOCATIONS * 8;
 
 type MH = TopLevelPoseidonMessageHash<
     POS_OUTPUT_LEN_FE,
@@ -498,20 +555,26 @@ mod test {{
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compute signature scheme parameters.")
-    parser.add_argument("log_lifetime", type=int, help="Log_2 of the key lifetime")
+    parser = argparse.ArgumentParser(
+        description="Compute signature scheme parameters.")
+    parser.add_argument("log_lifetime", type=int,
+                        help="Log_2 of the key lifetime")
     parser.add_argument("num_chains", type=int, help="Number of chains")
     parser.add_argument("chain_length", type=int, help="Length of each chain")
-    parser.add_argument("max_expected_trials", type=int, help="Maximum expected number of trials (impacts signer time and target sum)")
-    parser.add_argument("--rustcode", action="store_true", help="Output Rust code with computed parameters")
+    parser.add_argument("max_expected_trials", type=int,
+                        help="Maximum expected number of trials (impacts signer time and target sum)")
+    parser.add_argument("--rustcode", action="store_true",
+                        help="Output Rust code with computed parameters")
 
     args = parser.parse_args()
 
     # Call the function with the provided arguments
-    result = compute_parameters(args.log_lifetime, args.num_chains, args.chain_length, args.max_expected_trials)
+    result = compute_parameters(
+        args.log_lifetime, args.num_chains, args.chain_length, args.max_expected_trials)
 
     if args.rustcode:
-        rust_code = generate_rust_code(result, args.log_lifetime, args.num_chains, args.chain_length)
+        rust_code = generate_rust_code(
+            result, args.log_lifetime, args.num_chains, args.chain_length)
         print("\nGenerated Rust Code:\n")
         print(rust_code)
     else:
