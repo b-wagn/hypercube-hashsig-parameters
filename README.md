@@ -24,7 +24,7 @@ to get parameter estimates.
 Some combinations of number of chains and length of chains do not lead to any secure setting of parameters.
 In this case, the script fails with an assertion error.
 
-Interesting combinations are 50 chains of length 8, or 78 chains of length 4.
+Interesting combinations are 48 chains of length 10, or 64 chains of length 8.
 
 ## License
 Apache License, Version 2.0

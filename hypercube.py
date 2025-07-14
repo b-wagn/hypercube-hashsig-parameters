@@ -146,7 +146,7 @@ def permutation_width_24_enough_for_tree_hash(
 
 def get_capacity(log_field_size: int, security_level_classical: int, security_level_quantum: int) -> int:
     """
-    Returns the capacity, given in number of field elements
+    Returns the capacity, given in number of field elements.
     """
 
     capacity_lower_bound_classical = math.ceil(
@@ -432,7 +432,8 @@ def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int, ma
 
     # determine the number of invocations of Poseidon (width 24) we need during message hashing
     # we assume we take 24 - capacity elements from each invocation
-    mh_elements_per_invocation = 24 - get_capacity(LOG_FIELD_SIZE, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    capacity = get_capacity(LOG_FIELD_SIZE, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM)
+    mh_elements_per_invocation = 24 - capacity
     mh_pos_invocations = math.ceil(message_hash_before_mod_len_fe(
         LOG_FIELD_SIZE, num_chains, chain_length, domain_layer, SECURITY_LEVEL_CLASSICAL, SECURITY_LEVEL_QUANTUM) / mh_elements_per_invocation)
 
@@ -486,6 +487,7 @@ def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int, ma
     return {
         'rand_len_fe': rand_len_fe,
         'domain_layer': domain_layer,
+        'capacity': capacity,
         'mh_elements_per_invocation': mh_elements_per_invocation,
         'mh_pos_invocations': mh_pos_invocations,
         'target_sum': target_sum,
@@ -521,7 +523,7 @@ const MSG_LEN_FE: usize = 9;
 const RAND_LEN_FE: usize = {params['rand_len_fe']};
 const HASH_LEN_FE: usize = {params['hash_len_fe']};
 
-const CAPACITY: usize = 9;
+const CAPACITY: usize = {params['capacity']};
 
 const POSEIDON_INVOCATIONS: usize = {params['mh_pos_invocations']};
 const POS_OUTPUT_LEN_FE: usize = POSEIDON_INVOCATIONS * 8;
