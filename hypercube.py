@@ -525,11 +525,12 @@ const HASH_LEN_FE: usize = {params['hash_len_fe']};
 
 const CAPACITY: usize = {params['capacity']};
 
-const POSEIDON_INVOCATIONS: usize = {params['mh_pos_invocations']};
-const POS_OUTPUT_LEN_FE: usize = POSEIDON_INVOCATIONS * 8;
+const POS_OUTPUT_LEN_PER_INV_FE: usize = {params['mh_elements_per_invocation']};
+const POS_INVOCATIONS: usize = {params['mh_pos_invocations']};
+const POS_OUTPUT_LEN_FE: usize = POS_OUTPUT_LEN_PER_INV_FE * POS_INVOCATIONS;
 
 type MH = TopLevelPoseidonMessageHash<
-    POS_OUTPUT_LEN_FE,
+    POS_OUTPUT_LEN_PER_INV_FE, POS_INVOCATIONS, POS_OUTPUT_LEN_FE,
     DIMENSION,
     BASE,
     FINAL_LAYER,
