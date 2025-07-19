@@ -549,8 +549,11 @@ pub type SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_len
 #[cfg(test)]
 mod test {{
 
+    use crate::signature::{{generalized_xmss::instantiations_poseidon_top_level::lifetime_2_to_the_{log_lifetime}::SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length},SignatureScheme}};
+
+
     #[cfg(feature = "slow-tests")]
-    use crate::signature::test_templates::_test_signature_scheme_correctness;
+    use crate::signature::test_templates::test_signature_scheme_correctness;
 
     #[test]
     pub fn test_internal_consistency() {{
@@ -560,8 +563,8 @@ mod test {{
     #[test]
     #[cfg(feature = "slow-tests")]
     pub fn test_correctness() {{
-        _test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(213);
-        _test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(4);
+        test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(213);
+        test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(4);
     }}
 }}"""
     return rust_template
