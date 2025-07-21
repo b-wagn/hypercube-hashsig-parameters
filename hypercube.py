@@ -559,7 +559,8 @@ pub type SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_len
 #[cfg(test)]
 mod test {{
 
-    use crate::signature::{{generalized_xmss::instantiations_poseidon_top_level::lifetime_2_to_the_{log_lifetime}::SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length},SignatureScheme}};
+    use crate::signature::SignatureScheme;
+    use super::*;
 
 
     #[cfg(feature = "slow-tests")]
