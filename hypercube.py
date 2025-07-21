@@ -574,8 +574,8 @@ mod test {{
     #[test]
     #[cfg(feature = "slow-tests")]
     pub fn test_correctness() {{
-        test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(213);
-        test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(4);
+        test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(213, 0, SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}::LIFETIME as usize);
+        test_signature_scheme_correctness::<SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}>(4, 0, SIGTopLevelTargetSumLifetime{log_lifetime}Dim{num_chains}Base{chain_length}::LIFETIME as usize);
     }}
 }}"""
     return rust_template
