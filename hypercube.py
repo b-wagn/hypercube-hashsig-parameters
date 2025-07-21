@@ -510,6 +510,16 @@ def compute_parameters(log_lifetime: int, num_chains: int, chain_length: int, ma
 
 def generate_rust_code(params, log_lifetime, num_chains, chain_length):
     rust_template = f"""\
+
+    use crate::{{
+        inc_encoding::target_sum::TargetSumEncoding,
+        signature::generalized_xmss::GeneralizedXMSSSignatureScheme,
+        symmetric::{{
+            message_hash::top_level_poseidon::TopLevelPoseidonMessageHash,
+            prf::shake_to_field::ShakePRFtoF, tweak_hash::poseidon::PoseidonTweakHash,
+        }},
+    }};
+
 const LOG_LIFETIME: usize = {log_lifetime};
 
 const DIMENSION: usize = {num_chains};
