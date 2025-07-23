@@ -1,9 +1,9 @@
 # Parameter estimations for XMSS-like signatures using novel encodings
-This repository contains *preliminary* scripts to set parameters for hash-based signatures that instantiate XMSS as in [this paper](https://eprint.iacr.org/2025/055.pdf), but using novel encodings which are inspired by [this paper](https://eprint.iacr.org/2025/889.pdf).
+This repository contains scripts to set parameters for hash-based signatures that instantiate XMSS as in [this paper](https://eprint.iacr.org/2025/055.pdf), but using novel encodings which are inspired by [this paper](https://eprint.iacr.org/2025/889.pdf). This is summarized in [this paper](https://eprint.iacr.org/2025/1332).
 
 The idea is to replace the incomparable encodings used [here](https://eprint.iacr.org/2025/055.pdf) with incomparable encodings mapping into the top layers of a larger hypercube, as suggested [here](https://eprint.iacr.org/2025/889.pdf).
 
-Disclaimer: This not meant to be used in production, parameters have not been audited and are just estimates.
+Disclaimer: This not meant to be used in production, parameters have not been audited.
 
 ## Generating a Table
 You can generate a table with some interesting combinations of parameters for a given key lifetime via
